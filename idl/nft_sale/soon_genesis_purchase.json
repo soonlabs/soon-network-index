@@ -1,0 +1,331 @@
+{
+  "version": "0.1.0",
+  "name": "soon_genesis_purchase",
+  "instructions": [
+    {
+      "name": "initialize",
+      "accounts": [
+        {
+          "name": "adminAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "admin",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "executeSolOrder",
+      "accounts": [
+        {
+          "name": "user",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "admin",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "companyWallet",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "adminAccount",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "orderAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "orderId",
+          "type": "string"
+        },
+        {
+          "name": "userId",
+          "type": "string"
+        },
+        {
+          "name": "deadline",
+          "type": "u64"
+        },
+        {
+          "name": "nftPurchases",
+          "type": {
+            "vec": {
+              "defined": "NftPurchaseInfo"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "executeSplOrder",
+      "accounts": [
+        {
+          "name": "user",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "admin",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "adminAccount",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "orderAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "userTokenAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "companyTokenAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "orderId",
+          "type": "string"
+        },
+        {
+          "name": "userId",
+          "type": "string"
+        },
+        {
+          "name": "deadline",
+          "type": "u64"
+        },
+        {
+          "name": "nftPurchases",
+          "type": {
+            "vec": {
+              "defined": "NftPurchaseInfo"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "executeToken2022Order",
+      "accounts": [
+        {
+          "name": "user",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "admin",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "adminAccount",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "orderAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "userTokenAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "companyTokenAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "mint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "orderId",
+          "type": "string"
+        },
+        {
+          "name": "userId",
+          "type": "string"
+        },
+        {
+          "name": "deadline",
+          "type": "u64"
+        },
+        {
+          "name": "nftPurchases",
+          "type": {
+            "vec": {
+              "defined": "NftPurchaseInfo"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "changeAdmin",
+      "accounts": [
+        {
+          "name": "adminAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "admin",
+          "isMut": false,
+          "isSigner": true
+        }
+      ],
+      "args": [
+        {
+          "name": "newAdmin",
+          "type": "publicKey"
+        }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "AdminAccount",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "admin",
+            "type": "publicKey"
+          }
+        ]
+      }
+    },
+    {
+      "name": "OrderAccount",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "orderId",
+            "type": "string"
+          },
+          {
+            "name": "executed",
+            "type": "bool"
+          }
+        ]
+      }
+    }
+  ],
+  "types": [
+    {
+      "name": "NftPurchaseInfo",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "nftType",
+            "type": "u8"
+          },
+          {
+            "name": "price",
+            "type": "u64"
+          }
+        ]
+      }
+    }
+  ],
+  "events": [
+    {
+      "name": "OrderExecuted",
+      "fields": [
+        {
+          "name": "orderId",
+          "type": "string",
+          "index": false
+        },
+        {
+          "name": "userId",
+          "type": "string",
+          "index": false
+        },
+        {
+          "name": "timestamp",
+          "type": "u64",
+          "index": false
+        }
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "OrderExpired",
+      "msg": "Order has expired"
+    },
+    {
+      "code": 6001,
+      "name": "InvalidAdminSignature",
+      "msg": "Invalid admin signature"
+    },
+    {
+      "code": 6002,
+      "name": "OrderAlreadyExecuted",
+      "msg": "Order already executed"
+    }
+  ]
+}

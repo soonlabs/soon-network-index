@@ -1,0 +1,19 @@
+manifestVersion: subsquid.io/v0.1
+name: soon-network-index-mainnet
+description: 'Index soon mainent network global status'
+build: 
+deploy:
+  addons:
+    postgres: 
+    rpc:
+      - solana.http
+  processor:
+    env:
+      SOLANA_NODE: https://rpc.testnet.soo.network/rpc
+    cmd:
+      - node
+      - lib/main.js
+  api:
+    cmd:
+      - sqd
+      - api:prod
