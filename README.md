@@ -69,6 +69,20 @@ For even more details, see [Solana Indexing Docs](https://docs.subsquid.io/solan
 
 `npx squid-solana-typegen src/abi ./idl/*`
 
+## Add Tag
+
+If you can also add same tag to a graph with same name, it will ask you whether to release the tag and reassign.
+
+```
+sqd tags add production -n my-squid -s u293zi
+```
+
+## Deleta Grph
+
+```
+sqd rm -n my-squid -s fj0anc
+```
+
 ## Decoding binary data
 
 `@subsquid/borsh` package allows to easily define fast and type-safe codec for any Solana data structure.

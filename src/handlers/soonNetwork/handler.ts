@@ -69,7 +69,7 @@ async function handleTx(tx: Transaction, store: Store): Promise<void> {
 
   // record all programs
   for (let instruction of tx.instructions) {
-    updateProgram(instruction, store);
+    await updateProgram(instruction, store);
   }
   await updateUserAddr(tx as any, store);
 
