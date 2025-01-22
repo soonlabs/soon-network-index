@@ -1,6 +1,6 @@
 manifestVersion: subsquid.io/v0.1
-name: soon-network-index-mainnet
-description: 'Index soon mainent network global status'
+name: soon-network-index-testnet
+description: 'Index soon testnet network global status'
 build: 
 deploy:
   addons:
