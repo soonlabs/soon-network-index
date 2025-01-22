@@ -69,6 +69,14 @@ For even more details, see [Solana Indexing Docs](https://docs.subsquid.io/solan
 
 `npx squid-solana-typegen src/abi ./idl/*`
 
+## Deploy
+
+```
+sqd deploy --org xxx ./soonNetwork --add-tag xxx
+```
+
+* **org:** squid organization
+
 ## Add Tag
 
 If you can also add same tag to a graph with same name, it will ask you whether to release the tag and reassign.

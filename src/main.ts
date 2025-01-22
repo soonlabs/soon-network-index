@@ -158,5 +158,5 @@ run(dataSource, database, async (ctx) => {
   for (const handler of handlers) {
     await handler(blocks, ctx.store);
   }
-  handleSynchronization(blocks, ctx.store);
+  await handleSynchronization(blocks, ctx.store);
 });

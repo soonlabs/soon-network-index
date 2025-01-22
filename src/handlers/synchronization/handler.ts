@@ -7,7 +7,7 @@ import { SyncConfig } from "../../config";
 import { SyncrhonizationStatus } from "../../model";
 
 export async function handleSynchronization(blocks: Block[], store: Store): Promise<void> {
-  store.upsert([
+  await store.upsert([
     new SyncrhonizationStatus({
       id: "0",
       slot: BigInt(blocks[blocks.length - 1].header.slot),
