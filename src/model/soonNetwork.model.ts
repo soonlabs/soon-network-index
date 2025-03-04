@@ -7,6 +7,7 @@ import {
   StringColumn,
   BooleanColumn,
 } from "@subsquid/typeorm-store";
+import { ManyToOne, OneToMany } from "typeorm";
 
 @Entity()
 export class SoonNetworkStatus {
@@ -48,6 +49,9 @@ export class SoonNetworkTx {
   @BigIntColumn({ nullable: false })
   fee!: bigint;
 
+  @OneToMany(() => TokenTransfer, (ele) => ele.tx)
+  tokenTransfer!: bigint;
+
   @StringColumn({ nullable: false })
   txHash!: string;
 
@@ -82,4 +86,32 @@ export class SoonNetworkProgram {
 
   @BigIntColumn({ nullable: false })
   lastActiveTimestamp!: bigint;
+}
+
+@Entity()
+export class TokenTransfer {
+  constructor(props?: Partial<TokenTransfer>) {
+    Object.assign(this, props);
+  }
+
+  @PrimaryColumn()
+  id!: string;
+
+  @ManyToOne(() => SoonNetworkTx, (ele) => ele.txHash)
+  tx!: SoonNetworkTx;
+
+  @StringColumn({ nullable: true })
+  preOwner!: string;
+
+  @StringColumn({ nullable: true })
+  postOwner!: string;
+
+  @BigIntColumn({ nullable: true })
+  preAmount!: bigint;
+
+  @BigIntColumn({ nullable: true })
+  postAmount!: bigint;
+
+  @StringColumn({ nullable: true })
+  mint!: string;
 }

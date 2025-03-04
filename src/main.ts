@@ -83,6 +83,11 @@ const dataSource = new DataSourceBuilder()
       accounts: true,
       data: true,
     },
+    balance: {
+      // account: true,
+      pre: true,
+      post: true,
+    },
     tokenBalance: {
       // token balance record fields
       preAmount: true,

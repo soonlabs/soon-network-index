@@ -6,6 +6,7 @@ import {
   SoonNetworkStatus,
   SoonNetworkTx,
   SoonNetworkUserAddress,
+  TokenTransfer,
 } from "../../model/soonNetwork.model";
 import { Block, Instruction, Transaction } from "@subsquid/solana-objects";
 import { log } from "node:console";
@@ -72,20 +73,19 @@ async function handleTx(tx: Transaction, store: Store): Promise<void> {
     await updateProgram(instruction, store);
   }
   await updateUserAddr(tx as any, store);
+  const txToSave = new SoonNetworkTx({
+    id: tx.signatures[0],
+    sender: (tx as any).accountKeys[0],
+    computeUnit: BigInt(200000),
+    prioritizationGasPrice: BigInt(0),
+    fee: BigInt(tx.signatures.length) * BigInt(250),
+    txHash: tx.signatures[0],
+    timestamp: BigInt(tx.block.timestamp),
+    blockNumber: tx.block.height,
+  });
 
   // record tx
-  await store.save(
-    new SoonNetworkTx({
-      id: tx.signatures[0],
-      sender: (tx as any).accountKeys[0],
-      computeUnit: BigInt(200000),
-      prioritizationGasPrice: BigInt(0),
-      fee: BigInt(tx.signatures.length) * BigInt(250),
-      txHash: tx.signatures[0],
-      timestamp: BigInt(tx.block.timestamp),
-      blockNumber: tx.block.height,
-    })
-  );
+  await store.save(txToSave);
 
   if (!data) {
     await store.save(
@@ -101,5 +101,45 @@ async function handleTx(tx: Transaction, store: Store): Promise<void> {
     data.addressCount = BigInt(await store.count(SoonNetworkUserAddress));
     data.programCount = BigInt(await store.count(SoonNetworkProgram));
     await store.save(data);
+  }
+
+  // record token transfer events
+  {
+    let count = 1;
+    // handle native token account
+    {
+      for (const balance of tx.balances) {
+        await store.save(
+          new TokenTransfer({
+            id: `token-transfer#${tx.signatures[0]}#${count}`,
+            tx: txToSave,
+            preOwner: balance.account,
+            postOwner: balance.account,
+            preAmount: balance.pre,
+            postAmount: balance.post,
+            mint: "0x0000000000000000000000000000000000000000",
+          })
+        );
+        count++;
+      }
+    }
+
+    // handle token account
+    {
+      for (const tokenBalance of tx.tokenBalances) {
+        await store.save(
+          new TokenTransfer({
+            id: `token-transfer#${tx.signatures[0]}#${count}`,
+            tx: txToSave,
+            preOwner: tokenBalance.preOwner,
+            postOwner: tokenBalance.postOwner,
+            preAmount: tokenBalance.preAmount,
+            postAmount: tokenBalance.postAmount,
+            mint: tokenBalance.preMint || tokenBalance.postMint,
+          })
+        );
+        count++;
+      }
+    }
   }
 }
