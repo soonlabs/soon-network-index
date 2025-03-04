@@ -80,7 +80,7 @@ async function handleTx(tx: Transaction, store: Store): Promise<void> {
       sender: (tx as any).accountKeys[0],
       computeUnit: BigInt(200000),
       prioritizationGasPrice: BigInt(0),
-      fee: BigInt(tx.signatures.length) * BigInt(5000),
+      fee: BigInt(tx.signatures.length) * BigInt(250),
       txHash: tx.signatures[0],
       timestamp: BigInt(tx.block.timestamp),
       blockNumber: tx.block.height,

@@ -1,4 +1,4 @@
-import { Store } from "@subsquid/typeorm-store";
+import { bigdecimalTransformer, Store } from "@subsquid/typeorm-store";
 import assert from "assert";
 import * as tokenProgram from "../../abi/token-program";
 import {
@@ -46,8 +46,11 @@ async function handleIns(ins: Instruction, store: Store): Promise<void> {
 
     if (savedTx.prioritizationGasPrice != BigInt(0)) {
       savedTx.fee =
-        BigInt(ins.getTransaction().signatures.length) * BigInt(5000) +
-        savedTx.prioritizationGasPrice * savedTx.computeUnit;
+        BigInt(ins.getTransaction().signatures.length) * BigInt(250) +
+        (savedTx.prioritizationGasPrice * savedTx.computeUnit +
+          BigInt(10) ** BigInt(6) -
+          BigInt(1)) /
+          BigInt(10) ** BigInt(6);
     }
 
     // record tx
