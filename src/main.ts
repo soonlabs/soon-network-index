@@ -6,6 +6,8 @@ import { log } from "node:console";
 import { SyncConfig } from "./config";
 import { handleSynchronization } from "./handlers/synchronization/handler";
 import { handleSoonNetwork } from "./handlers/soonNetwork/handler";
+import * as computeBudget from "./abi/computeBudget";
+import { handleComputeBudget } from "./handlers/computeBudget/handler";
 
 // First we create a DataSource - component,
 // that defines where to get the data and what data should we get.
@@ -99,6 +101,11 @@ const dataSource = new DataSourceBuilder()
   .addInstruction({
     // select instructions, that:
     where: {
+      programId: [SyncConfig.address.ComputeBudget.programId],
+      d1: [
+        computeBudget.instructions.setComputeUnitLimit.d1,
+        computeBudget.instructions.setComputeUnitPrice.d1,
+      ],
       isCommitted: true, // where successfully committed
     },
     // for each instruction selected above
@@ -152,7 +159,12 @@ const dataSource = new DataSourceBuilder()
 // https://github.com/subsquid/squid-sdk/blob/278195bd5a5ed0a9e24bfb99ee7bbb86ff94ccb3/typeorm/typeorm-config/src/config.ts#L21
 const database = new TypeormDatabase();
 
-const handlers: ((blocks: Block[], store: Store) => Promise<void>)[] = [handleSoonNetwork];
+const handlers: ((blocks: Block[], store: Store) => Promise<void>)[] = [
+  handleSoonNetwork,
+  // compute budger handler should be place after soonNetwork handler,
+  // wait for soonNetwork handler to create txs
+  handleComputeBudget,
+];
 run(dataSource, database, async (ctx) => {
   const blocks = ctx.blocks.map(augmentBlock);
   for (const handler of handlers) {

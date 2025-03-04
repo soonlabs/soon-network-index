@@ -67,7 +67,7 @@ For even more details, see [Solana Indexing Docs](https://docs.subsquid.io/solan
 
 ## Generate Type
 
-`npx squid-solana-typegen src/abi ./idl/*`
+* [ ] `npx squid-solana-typegen src/abi ./idl/*`
 
 ## Deploy
 
@@ -85,7 +85,7 @@ If you can also add same tag to a graph with same name, it will ask you whether 
 sqd tags add production -n my-squid -s u293zi
 ```
 
-## Deleta Grph
+## Deleta Graph
 
 ```
 sqd rm -n my-squid -s fj0anc

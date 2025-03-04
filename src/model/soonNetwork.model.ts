@@ -39,6 +39,15 @@ export class SoonNetworkTx {
   @StringColumn({ nullable: false })
   sender!: string;
 
+  @BigIntColumn({ nullable: false })
+  computeUnit!: bigint;
+
+  @BigIntColumn({ nullable: false })
+  prioritizationGasPrice!: bigint;
+
+  @BigIntColumn({ nullable: false })
+  fee!: bigint;
+
   @StringColumn({ nullable: false })
   txHash!: string;
 

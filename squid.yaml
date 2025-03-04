@@ -1,15 +1,15 @@
 manifestVersion: subsquid.io/v0.1
-name: soon-network-index-testnet
-description: 'Index soon testnet network global status'
-build: 
+name: soon-network-index
+description: "Index soon network global status"
+build:
 deploy:
   addons:
-    postgres: 
+    postgres:
     rpc:
       - solana.http
   processor:
-    env:
-      SOLANA_NODE: https://rpc.testnet.soo.network/rpc
+    # env:
+    #   SOLANA_NODE: https://rpc.mainnet.soo.network/rpc
     cmd:
       - node
       - lib/main.js
