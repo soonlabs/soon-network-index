@@ -173,8 +173,8 @@ export class DailyUniqueAddressStat {
 }
 
 @Entity()
-export class DailyPriorityFeeStat {
-  constructor(props?: Partial<DailyPriorityFeeStat>) {
+export class DailyPriorityGasPriceStat {
+  constructor(props?: Partial<DailyPriorityGasPriceStat>) {
     Object.assign(this, props);
   }
 
@@ -188,14 +188,40 @@ export class DailyPriorityFeeStat {
   transactionCount!: number;
 
   @BigIntColumn({ nullable: false })
-  averagePriorityFee!: bigint;
+  averagePriorityGasPrice!: bigint;
 
   @BigIntColumn({ nullable: false })
-  maxPriorityFee!: bigint;
+  maxPriorityGasPrice!: bigint;
 
   @BigIntColumn({ nullable: false })
-  minPriorityFee!: bigint;
+  minPriorityGasPrice!: bigint;
 
   @BigIntColumn({ nullable: false })
-  totalPriorityFee!: bigint;
+  totalPriorityGasPrice!: bigint;
+}
+
+@Entity()
+export class TransactionFeeStat {
+  constructor(props?: Partial<TransactionFeeStat>) {
+    Object.assign(this, props);
+  }
+
+  @PrimaryColumn()
+  id!: string;
+
+  // network transactions fee
+  @BigIntColumn({ nullable: false })
+  networkTransactionsFee!: bigint;
+
+  // total gas price
+  @BigIntColumn({ nullable: false })
+  totalGasPrice!: bigint;
+
+  // total tx count
+  @BigIntColumn({ nullable: false })
+  totalTxCount!: bigint;
+
+  // average gas price
+  @BigIntColumn({ nullable: false })
+  averageGasPrice!: bigint;
 }

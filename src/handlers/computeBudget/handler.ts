@@ -2,22 +2,27 @@ import { bigdecimalTransformer, Store } from "@subsquid/typeorm-store";
 import assert from "assert";
 import * as tokenProgram from "../../abi/token-program";
 import {
-  DailyPriorityFeeStat,
+  DailyPriorityGasPriceStat,
   DailyTransactionStat,
   DailyUniqueAddressStat,
   SoonNetworkProgram,
   SoonNetworkStatus,
   SoonNetworkTx,
   SoonNetworkUserAddress,
+  TokenTransfer,
+  TransactionFeeStat,
 } from "../../model/soonNetwork.model";
 import { Block, Instruction, Transaction } from "@subsquid/solana-objects";
 import { log } from "node:console";
 import { SyncConfig } from "../../config";
 import { Base58Bytes } from "@subsquid/borsh/lib/type-util";
 import * as computeBudget from "../../abi/computeBudget";
+import { LessThan } from "typeorm";
 
 export async function handleComputeBudget(blocks: Block[], store: Store): Promise<void> {
   for (let block of blocks) {
+    await handleBlock(store);
+
     for (let ins of block.instructions) {
       // filter out the instructions with errors
       if (ins.getTransaction().err) {
@@ -26,6 +31,26 @@ export async function handleComputeBudget(blocks: Block[], store: Store): Promis
       await handleIns(ins, store);
     }
   }
+}
+
+async function handleBlock(store:Store):Promise<void>{
+    // remove tx before 24 hours
+    const timestampOf24HoursAgo = BigInt(Math.floor((new Date).getTime() - 24 * 60 * 60 * 1000 / 1000));
+
+    const expiredTxs = await store.find(SoonNetworkTx, { where: { timestamp: LessThan(timestampOf24HoursAgo)} });
+    console.log('expiredTxs length: ', expiredTxs.length);
+    if (expiredTxs.length > 0) {
+
+      for (const expiredTx of expiredTxs) {
+        // remove token transfer record
+        const tokenTransferTx = await store.find(TokenTransfer, { where: { tx: expiredTx} });
+        console.log('tokenTransferTx id: ', tokenTransferTx.length);
+        await store.remove(tokenTransferTx);
+
+        // remove tx record
+        await store.remove(expiredTx);
+      }
+    }
 }
 
 async function handleIns(ins: Instruction, store: Store): Promise<void> {
@@ -42,7 +67,8 @@ async function handleIns(ins: Instruction, store: Store): Promise<void> {
       throw new Error("Tx not found");
     }
 
-    let priorityFee = BigInt(0); // microLamports
+    let priorityGasPrice = BigInt(0); // microLamports
+    let txFee = BigInt(0);
     if (ins.d1 === computeBudget.instructions.setComputeUnitLimit.d1) {
       let decodedIns = computeBudget.instructions.setComputeUnitLimit.decode(ins);
       savedTx.computeUnit = BigInt(decodedIns.data.units);
@@ -59,40 +85,66 @@ async function handleIns(ins: Instruction, store: Store): Promise<void> {
           BigInt(1)) /
           BigInt(10) ** BigInt(6);
       
-      priorityFee = savedTx.prioritizationGasPrice;
+      txFee = savedTx.fee;
+      priorityGasPrice = savedTx.prioritizationGasPrice;
     }
 
     // record tx
     await store.upsert(savedTx);
 
     /////////////////////////////////////////////////////////////////////////////////
-    // update gas price
-    let dailyPriorityFee = await store.get(DailyPriorityFeeStat, { where: { date: txDate } });
+    // update network transaction fee
+    // update average gas price
+    let transactionFeeStat = await store.get(TransactionFeeStat, {
+      where: {
+        id: "1",
+      },
+    });
+
+    if(!transactionFeeStat){
+      transactionFeeStat = new TransactionFeeStat();
+      transactionFeeStat.id = "1";
+      transactionFeeStat.networkTransactionsFee = BigInt(0);
+      transactionFeeStat.totalGasPrice = BigInt(0);
+      transactionFeeStat.totalTxCount = BigInt(0);
+      transactionFeeStat.averageGasPrice = BigInt(0);
+    }
+
+    transactionFeeStat.networkTransactionsFee += txFee;
+    transactionFeeStat.totalGasPrice += priorityGasPrice;
+    transactionFeeStat.totalTxCount += BigInt(1);
+
+    transactionFeeStat.averageGasPrice = transactionFeeStat.totalGasPrice / transactionFeeStat.totalTxCount;
+    await store.upsert(savedTx);
+
+    /////////////////////////////////////////////////////////////////////////////////
+    // update daily gas price
+    let dailyPriorityFee = await store.get(DailyPriorityGasPriceStat, { where: { date: txDate } });
     if (!dailyPriorityFee) {
-      dailyPriorityFee = new DailyPriorityFeeStat();
+      dailyPriorityFee = new DailyPriorityGasPriceStat();
       dailyPriorityFee.id = txDate;
       dailyPriorityFee.date = txDate;
       dailyPriorityFee.transactionCount = 0;
-      dailyPriorityFee.averagePriorityFee = BigInt(0);
-      dailyPriorityFee.maxPriorityFee = BigInt(0);
-      dailyPriorityFee.minPriorityFee = BigInt(0);
-      dailyPriorityFee.totalPriorityFee = BigInt(0);
+      dailyPriorityFee.averagePriorityGasPrice = BigInt(0);
+      dailyPriorityFee.maxPriorityGasPrice = BigInt(0);
+      dailyPriorityFee.minPriorityGasPrice = BigInt(0);
+      dailyPriorityFee.totalPriorityGasPrice = BigInt(0);
     }
 
     // process priority fee
     dailyPriorityFee.transactionCount +=1;
 
-    if(priorityFee > dailyPriorityFee.maxPriorityFee){
-      dailyPriorityFee.maxPriorityFee = priorityFee;
+    if(priorityGasPrice > dailyPriorityFee.maxPriorityGasPrice){
+      dailyPriorityFee.maxPriorityGasPrice = priorityGasPrice;
     }
 
-    if(priorityFee < dailyPriorityFee.minPriorityFee){
-      dailyPriorityFee.minPriorityFee = priorityFee;
+    if(priorityGasPrice < dailyPriorityFee.minPriorityGasPrice){
+      dailyPriorityFee.minPriorityGasPrice = priorityGasPrice;
     }
 
-    dailyPriorityFee.totalPriorityFee += priorityFee;
+    dailyPriorityFee.totalPriorityGasPrice += priorityGasPrice;
 
-    dailyPriorityFee.averagePriorityFee = dailyPriorityFee.totalPriorityFee / BigInt(dailyPriorityFee.transactionCount);
+    dailyPriorityFee.averagePriorityGasPrice = dailyPriorityFee.totalPriorityGasPrice / BigInt(dailyPriorityFee.transactionCount);
     
     await store.upsert(dailyPriorityFee);
   }
@@ -110,7 +162,7 @@ async function handleIns(ins: Instruction, store: Store): Promise<void> {
   await store.upsert(dailyTx);
 
   /////////////////////////////////////////////////////////////////////////////////
-  // update unique address
+  // update daily unique address
   const sender = (ins.getTransaction() as any).accountKeys[0];
   let dailyUniqueAddr = await store.get(DailyUniqueAddressStat, { where: { date: txDate } });
   
