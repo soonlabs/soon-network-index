@@ -28,21 +28,13 @@ export async function handleBlock(block:Block, store:Store):Promise<void>{
   if(block.header.height % 500 !== 0){
     return;
   }
-
-  console.log("block height: "+block.header.height);
   
   // remove tx before 24 hours
   const timestampOf24HoursAgo = getTimestampOf24hAgo();
 
   const expiredTxs = await store.find(SoonNetworkTx, { where: { timestamp: LessThan(timestampOf24HoursAgo)} });
-  console.log('-------------');
-  console.log('expiredTxs length: ', expiredTxs.length);
-  console.log("before: ");
-  console.log("TokenTransfer length: ",await store.count(TokenTransfer));
-  console.log('SoonNetworkTx length: ', await store.count(SoonNetworkTx));
 
   if (expiredTxs.length > 0) {
-
     for (const expiredTx of expiredTxs) {
       // remove token transfer record
       const tokenTransferTx = await store.find(TokenTransfer, { where: { tx: expiredTx} });
@@ -52,10 +44,6 @@ export async function handleBlock(block:Block, store:Store):Promise<void>{
       await store.remove(expiredTx);
     }
   }
-
-  console.log("after: ");
-  console.log("TokenTransfer length: ",await store.count(TokenTransfer));
-  console.log('SoonNetworkTx length: ', await store.count(SoonNetworkTx));
 }
 
 export async function handleIns(ins: Instruction, store: Store): Promise<bigint> {
