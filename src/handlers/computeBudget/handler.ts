@@ -91,7 +91,7 @@ async function handleIns(ins: Instruction, store: Store): Promise<void> {
     transactionFeeStat.totalTxCount += BigInt(1);
 
     transactionFeeStat.averageGasPrice = transactionFeeStat.totalGasPrice / transactionFeeStat.totalTxCount;
-    await store.upsert(savedTx);
+    await store.upsert(transactionFeeStat);
 
     /////////////////////////////////////////////////////////////////////////////////
     // update daily gas price
