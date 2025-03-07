@@ -17,21 +17,35 @@ import { log } from "node:console";
 import { SyncConfig } from "../../config";
 import { Base58Bytes } from "@subsquid/borsh/lib/type-util";
 import * as computeBudget from "../../abi/computeBudget";
-import { LessThan } from "typeorm";
+import { LessThan, MoreThan } from "typeorm";
 
 export function getTimestampOf24hAgo(){
   return BigInt(Math.floor((new Date).getTime() - 24 * 60 * 60 * 1000 / 1000))
 }
 
 export async function handleBlock(block:Block, store:Store):Promise<void>{
+  const timestampOf24HoursAgo = getTimestampOf24hAgo();
+
+  // update 24 hours tx and address
+  let data = await store.get(SoonNetworkStatus, {
+    where: {
+      id: "1",
+    },
+  });
+
+  if(data){
+    data.txCount24Hours = BigInt(await store.count(SoonNetworkTx, { where: { timestamp: MoreThan(timestampOf24HoursAgo)}}))
+    data.addressCount24Hours = BigInt(await store.count(SoonNetworkUserAddress, { where: { lastActiveTimestamp: MoreThan(timestampOf24HoursAgo)}})),
+    await store.save(data);
+  }
+
+  ////////////////////////////////////////////////////////////////////////
   // remove transactions before 24 hours ago
   if(block.header.height % 500 !== 0){
     return;
   }
   
   // remove tx before 24 hours
-  const timestampOf24HoursAgo = getTimestampOf24hAgo();
-
   const expiredTxs = await store.find(SoonNetworkTx, { where: { timestamp: LessThan(timestampOf24HoursAgo)} });
 
   if (expiredTxs.length > 0) {

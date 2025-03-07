@@ -9,7 +9,6 @@ import {
   SoonNetworkStatus,
   SoonNetworkTx,
   SoonNetworkUserAddress,
-  TokenTransfer,
   TransactionFeeStat,
 } from "../../model/soonNetwork.model";
 import { Block, Instruction, Transaction } from "@subsquid/solana-objects";
@@ -17,11 +16,9 @@ import { log } from "node:console";
 import { SyncConfig } from "../../config";
 import { Base58Bytes } from "@subsquid/borsh/lib/type-util";
 import * as computeBudget from "../../abi/computeBudget";
-import { LessThan } from "typeorm";
 
 export async function handleComputeBudget(blocks: Block[], store: Store): Promise<void> {
   for (let block of blocks) {
-
     for (let ins of block.instructions) {
       // filter out the instructions with errors
       if (ins.getTransaction().err) {

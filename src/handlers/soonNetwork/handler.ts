@@ -14,8 +14,7 @@ import { Block, Instruction, Transaction } from "@subsquid/solana-objects";
 import { log } from "node:console";
 import { SyncConfig } from "../../config";
 import { Base58Bytes } from "@subsquid/borsh/lib/type-util";
-import { getTimestampOf24hAgo, handleBlock, handleIns } from "./insHandler";
-import { LessThan, MoreThan } from "typeorm";
+import { handleBlock, handleIns } from "./insHandler";
 
 export async function handleSoonNetwork(blocks: Block[], store: Store): Promise<void> {
   for (let block of blocks) {
@@ -101,7 +100,6 @@ async function handleTx(tx: Transaction, store: Store): Promise<void> {
   // record tx
   await store.save(txToSave);
 
-  const timestampOf24HoursAgo = getTimestampOf24hAgo();
   if (!data) {
     await store.save(
       new SoonNetworkStatus({
@@ -109,15 +107,13 @@ async function handleTx(tx: Transaction, store: Store): Promise<void> {
         txCount: BigInt(1),
         txCount24Hours: BigInt(0),
         addressCount: BigInt(await store.count(SoonNetworkUserAddress)),
-        addressCount24Hours: BigInt(await store.count(SoonNetworkUserAddress, { where: { lastActiveTimestamp: MoreThan(timestampOf24HoursAgo)}})),
+        addressCount24Hours: BigInt(0),
         programCount: BigInt(await store.count(SoonNetworkProgram)),
       })
     );
   } else {
     data.txCount += BigInt(1);
-    data.txCount = BigInt(await store.count(SoonNetworkTx, { where: { timestamp: MoreThan(timestampOf24HoursAgo)}}))
     data.addressCount = BigInt(await store.count(SoonNetworkUserAddress));
-    data.addressCount24Hours = BigInt(await store.count(SoonNetworkUserAddress, { where: { lastActiveTimestamp: MoreThan(timestampOf24HoursAgo)}})),
     data.programCount = BigInt(await store.count(SoonNetworkProgram));
     await store.save(data);
   }
