@@ -23,9 +23,17 @@ export class SoonNetworkStatus {
   @BigIntColumn({ nullable: false })
   txCount!: bigint;
 
+  // transaction count for 24 hours
+  @BigIntColumn({ nullable: false })
+  txCount24Hours!: bigint;
+
   // address count
   @BigIntColumn({ nullable: false })
   addressCount!: bigint;
+
+  // address count for 24 hours
+  @BigIntColumn({ nullable: false })
+  addressCount24Hours!: bigint;
 
   // program count
   @BigIntColumn({ nullable: false })

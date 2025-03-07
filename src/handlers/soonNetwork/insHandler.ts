@@ -19,20 +19,47 @@ import { Base58Bytes } from "@subsquid/borsh/lib/type-util";
 import * as computeBudget from "../../abi/computeBudget";
 import { LessThan } from "typeorm";
 
-export async function handleComputeBudget(blocks: Block[], store: Store): Promise<void> {
-  for (let block of blocks) {
-
-    for (let ins of block.instructions) {
-      // filter out the instructions with errors
-      if (ins.getTransaction().err) {
-        continue;
-      }
-      await handleIns(ins, store);
-    }
-  }
+export function getTimestampOf24hAgo(){
+  return BigInt(Math.floor((new Date).getTime() - 24 * 60 * 60 * 1000 / 1000))
 }
 
-async function handleIns(ins: Instruction, store: Store): Promise<void> {
+export async function handleBlock(block:Block, store:Store):Promise<void>{
+  // remove transactions before 24 hours ago
+  if(block.header.height % 500 !== 0){
+    return;
+  }
+
+  console.log("block height: "+block.header.height);
+  
+  // remove tx before 24 hours
+  const timestampOf24HoursAgo = getTimestampOf24hAgo();
+
+  const expiredTxs = await store.find(SoonNetworkTx, { where: { timestamp: LessThan(timestampOf24HoursAgo)} });
+  console.log('-------------');
+  console.log('expiredTxs length: ', expiredTxs.length);
+  console.log("before: ");
+  console.log("TokenTransfer length: ",await store.count(TokenTransfer));
+  console.log('SoonNetworkTx length: ', await store.count(SoonNetworkTx));
+
+  if (expiredTxs.length > 0) {
+
+    for (const expiredTx of expiredTxs) {
+      // remove token transfer record
+      const tokenTransferTx = await store.find(TokenTransfer, { where: { tx: expiredTx} });
+      await store.remove(tokenTransferTx);
+
+      // remove tx record
+      await store.remove(expiredTx);
+    }
+  }
+
+  console.log("after: ");
+  console.log("TokenTransfer length: ",await store.count(TokenTransfer));
+  console.log('SoonNetworkTx length: ', await store.count(SoonNetworkTx));
+}
+
+export async function handleIns(ins: Instruction, store: Store): Promise<bigint> {
+  let insFee = BigInt(0);
   const txDate = new Date(ins.block.timestamp * 1000).toISOString().split('T')[0];
 
   if (ins.programId === SyncConfig.address.ComputeBudget.programId) {
@@ -47,7 +74,7 @@ async function handleIns(ins: Instruction, store: Store): Promise<void> {
     }
 
     let priorityGasPrice = BigInt(0); // microLamports
-    let txFee = BigInt(0);
+    
     if (ins.d1 === computeBudget.instructions.setComputeUnitLimit.d1) {
       let decodedIns = computeBudget.instructions.setComputeUnitLimit.decode(ins);
       savedTx.computeUnit = BigInt(decodedIns.data.units);
@@ -64,7 +91,7 @@ async function handleIns(ins: Instruction, store: Store): Promise<void> {
           BigInt(1)) /
           BigInt(10) ** BigInt(6);
       
-      txFee = savedTx.fee;
+      insFee = savedTx.fee;
       priorityGasPrice = savedTx.prioritizationGasPrice;
     }
 
@@ -89,7 +116,7 @@ async function handleIns(ins: Instruction, store: Store): Promise<void> {
       transactionFeeStat.averageGasPrice = BigInt(0);
     }
 
-    transactionFeeStat.networkTransactionsFee += txFee;
+    transactionFeeStat.networkTransactionsFee += insFee;
     transactionFeeStat.totalGasPrice += priorityGasPrice;
     transactionFeeStat.totalTxCount += BigInt(1);
 
@@ -127,4 +154,6 @@ async function handleIns(ins: Instruction, store: Store): Promise<void> {
     
     await store.upsert(dailyPriorityFee);
   }
+
+  return insFee;
 }

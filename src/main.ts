@@ -168,7 +168,7 @@ const handlers: ((blocks: Block[], store: Store) => Promise<void>)[] = [
   handleSoonNetwork,
   // compute budger handler should be place after soonNetwork handler,
   // wait for soonNetwork handler to create txs
-  handleComputeBudget,
+  // handleComputeBudget,
 ];
 run(dataSource, database, async (ctx) => {
   const blocks = ctx.blocks.map(augmentBlock);

@@ -2,6 +2,8 @@ import { Store } from "@subsquid/typeorm-store";
 import assert from "assert";
 import * as tokenProgram from "../../abi/token-program";
 import {
+  DailyTransactionStat,
+  DailyUniqueAddressStat,
   SoonNetworkProgram,
   SoonNetworkStatus,
   SoonNetworkTx,
@@ -12,6 +14,8 @@ import { Block, Instruction, Transaction } from "@subsquid/solana-objects";
 import { log } from "node:console";
 import { SyncConfig } from "../../config";
 import { Base58Bytes } from "@subsquid/borsh/lib/type-util";
+import { getTimestampOf24hAgo, handleBlock, handleIns } from "./insHandler";
+import { LessThan, MoreThan } from "typeorm";
 
 export async function handleSoonNetwork(blocks: Block[], store: Store): Promise<void> {
   for (let block of blocks) {
@@ -22,6 +26,16 @@ export async function handleSoonNetwork(blocks: Block[], store: Store): Promise<
       }
       await handleTx(tx, store);
     }
+
+    for (let ins of block.instructions) {
+      // filter out the instructions with errors
+      if (ins.getTransaction().err) {
+        continue;
+      }
+      await handleIns(ins, store);
+    }
+
+    await handleBlock(block, store);
   }
 }
 
@@ -87,18 +101,23 @@ async function handleTx(tx: Transaction, store: Store): Promise<void> {
   // record tx
   await store.save(txToSave);
 
+  const timestampOf24HoursAgo = getTimestampOf24hAgo();
   if (!data) {
     await store.save(
       new SoonNetworkStatus({
         id: "1",
         txCount: BigInt(1),
+        txCount24Hours: BigInt(0),
         addressCount: BigInt(await store.count(SoonNetworkUserAddress)),
+        addressCount24Hours: BigInt(await store.count(SoonNetworkUserAddress, { where: { lastActiveTimestamp: MoreThan(timestampOf24HoursAgo)}})),
         programCount: BigInt(await store.count(SoonNetworkProgram)),
       })
     );
   } else {
     data.txCount += BigInt(1);
+    data.txCount = BigInt(await store.count(SoonNetworkTx, { where: { timestamp: MoreThan(timestampOf24HoursAgo)}}))
     data.addressCount = BigInt(await store.count(SoonNetworkUserAddress));
+    data.addressCount24Hours = BigInt(await store.count(SoonNetworkUserAddress, { where: { lastActiveTimestamp: MoreThan(timestampOf24HoursAgo)}})),
     data.programCount = BigInt(await store.count(SoonNetworkProgram));
     await store.save(data);
   }
@@ -142,4 +161,48 @@ async function handleTx(tx: Transaction, store: Store): Promise<void> {
       }
     }
   }
+
+  const txDate = new Date(tx.block.timestamp * 1000).toISOString().split('T')[0];
+
+  /////////////////////////////////////////////////////////////////////////////////
+  // update daily transaction
+  let dailyTx = await store.get(DailyTransactionStat, { where: { date: txDate } });
+  if (!dailyTx) {
+    dailyTx = new DailyTransactionStat();
+    dailyTx.id = txDate;
+    dailyTx.date = txDate;
+    dailyTx.transactionCount = 0;
+  }
+  dailyTx.transactionCount += 1;
+  await store.upsert(dailyTx);
+
+  /////////////////////////////////////////////////////////////////////////////////
+  // update daily unique address
+  const sender = (tx as any).accountKeys[0];
+  let dailyUniqueAddr = await store.get(DailyUniqueAddressStat, { where: { date: txDate } });
+  
+  if (!dailyUniqueAddr) {
+    // clear previous addresses array
+    const yesterday = new Date(tx.block.timestamp * 1000 - 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
+    let yesterdayStats = await store.get(DailyUniqueAddressStat, { where: { date: yesterday } });
+    if(yesterdayStats && yesterdayStats.addresses?.length > 0){
+      yesterdayStats.addresses = []; 
+      await store.upsert(yesterdayStats);
+    }
+
+    // create today's entity
+    dailyUniqueAddr = new DailyUniqueAddressStat();
+    dailyUniqueAddr.id = txDate;
+    dailyUniqueAddr.date = txDate;
+    dailyUniqueAddr.uniqueAddressCount = 0;
+    dailyUniqueAddr.addresses = [];
+  }
+  
+  if (!dailyUniqueAddr.addresses.includes(sender)) {
+    dailyUniqueAddr.addresses.push(sender);
+    dailyUniqueAddr.uniqueAddressCount += 1;
+  }
+
+  await store.upsert(dailyUniqueAddr);
 }
