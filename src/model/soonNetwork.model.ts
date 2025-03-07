@@ -6,6 +6,7 @@ import {
   PrimaryColumn,
   StringColumn,
   BooleanColumn,
+  Column,
 } from "@subsquid/typeorm-store";
 import { ManyToOne, OneToMany } from "typeorm";
 
@@ -134,4 +135,67 @@ export class TokenTransfer {
   // token address
   @StringColumn({ nullable: true })
   mint!: string;
+}
+
+@Entity()
+export class DailyTransactionStat {
+  constructor(props?: Partial<DailyTransactionStat>) {
+    Object.assign(this, props);
+  }
+
+  @PrimaryColumn()
+  id!: string;
+
+  @StringColumn({ nullable: false })
+  date!: string;
+
+  @IntColumn({ nullable: false })
+  transactionCount!: number; 
+}
+
+@Entity()
+export class DailyUniqueAddressStat {
+  constructor(props?: Partial<DailyUniqueAddressStat>) {
+    Object.assign(this, props);
+  }
+
+  @PrimaryColumn()
+  id!: string;
+
+  @StringColumn({ nullable: false })
+  date!: string;
+
+  @IntColumn({ nullable: false })
+  uniqueAddressCount!: number;
+
+  @Column("text", { array: true })
+  addresses!: string[];
+}
+
+@Entity()
+export class DailyPriorityFeeStat {
+  constructor(props?: Partial<DailyPriorityFeeStat>) {
+    Object.assign(this, props);
+  }
+
+  @PrimaryColumn()
+  id!: string;
+
+  @StringColumn({ nullable: false })
+  date!: string;
+
+  @IntColumn({ nullable: false })
+  transactionCount!: number;
+
+  @BigIntColumn({ nullable: false })
+  averagePriorityFee!: bigint;
+
+  @BigIntColumn({ nullable: false })
+  maxPriorityFee!: bigint;
+
+  @BigIntColumn({ nullable: false })
+  minPriorityFee!: bigint;
+
+  @BigIntColumn({ nullable: false })
+  totalPriorityFee!: bigint;
 }
