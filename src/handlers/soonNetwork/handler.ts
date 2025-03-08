@@ -27,7 +27,7 @@ export async function handleSoonNetwork(blocks: Block[], store: Store): Promise<
       
         await handleTx(tx, store);
       } catch (error) {
-        console.error(`Error processing tx, block ${tx.block.height}:`, error);
+        console.error(`Error processing tx, block ${tx?.block?.height ?? "unknown"}:`, error);
       }
     }
 
@@ -39,14 +39,14 @@ export async function handleSoonNetwork(blocks: Block[], store: Store): Promise<
         }
         await handleIns(ins, store);
       } catch (error) {
-        console.error(`Error processing ins, block ${ins.block.height}:`, error);
+        console.error(`Error processing ins, block ${ins?.block?.height ?? "unknown"}:`, error);
       }
     }
 
     try {
       await handleBlock(block, store);
     } catch (error) {
-      console.error(`Error processing block ${block.header.height}:`, error);
+      console.error(`Error processing block ${block?.header?.height ?? "unknown"}:`, error);
     }
   }
 }
