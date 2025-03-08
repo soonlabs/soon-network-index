@@ -61,7 +61,7 @@ export async function handleBlock(block:Block, store:Store):Promise<void>{
   }
 }
 
-export async function handleIns(ins: Instruction, store: Store): Promise<bigint> {
+export async function handleIns(ins: Instruction, store: Store): Promise<void> {
   let insFee = BigInt(0);
   const txDate = new Date(ins.block.timestamp * 1000).toISOString().split('T')[0];
 
@@ -157,6 +157,4 @@ export async function handleIns(ins: Instruction, store: Store): Promise<bigint>
     
     await store.upsert(dailyPriorityFee);
   }
-
-  return insFee;
 }

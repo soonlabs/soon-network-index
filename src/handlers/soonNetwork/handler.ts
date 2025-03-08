@@ -19,22 +19,35 @@ import { handleBlock, handleIns } from "./insHandler";
 export async function handleSoonNetwork(blocks: Block[], store: Store): Promise<void> {
   for (let block of blocks) {
     for (let tx of block.transactions) {
-      // filter out the instructions with errors
-      if (tx.err) {
-        continue;
+      try {
+        // filter out the instructions with errors
+        if (tx.err) {
+          continue;
+        }
+      
+        await handleTx(tx, store);
+      } catch (error) {
+        console.error(`Error processing tx, block ${tx.block.height}:`, error);
       }
-      await handleTx(tx, store);
     }
 
     for (let ins of block.instructions) {
-      // filter out the instructions with errors
-      if (ins.getTransaction().err) {
-        continue;
+      try {
+        // filter out the instructions with errors
+        if (ins.getTransaction().err) {
+          continue;
+        }
+        await handleIns(ins, store);
+      } catch (error) {
+        console.error(`Error processing ins, block ${ins.block.height}:`, error);
       }
-      await handleIns(ins, store);
     }
 
-    await handleBlock(block, store);
+    try {
+      await handleBlock(block, store);
+    } catch (error) {
+      console.error(`Error processing block ${block.header.height}:`, error);
+    }
   }
 }
 
