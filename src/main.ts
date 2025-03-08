@@ -7,7 +7,7 @@ import { SyncConfig } from "./config";
 import { handleSynchronization } from "./handlers/synchronization/handler";
 import { handleSoonNetwork } from "./handlers/soonNetwork/handler";
 import * as computeBudget from "./abi/computeBudget";
-import { handleComputeBudget } from "./handlers/computeBudget/handler";
+// import { handleComputeBudget } from "./handlers/computeBudget/handler";
 
 // First we create a DataSource - component,
 // that defines where to get the data and what data should we get.
