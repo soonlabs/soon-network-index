@@ -43,6 +43,7 @@ export async function handleSoonNetwork(blocks: Block[], store: Store): Promise<
       }
     }
 
+    // process each block
     try {
       await handleBlock(block, store);
     } catch (error) {

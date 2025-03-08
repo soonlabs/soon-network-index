@@ -23,6 +23,7 @@ export function getTimestampOf24hAgo(){
   return BigInt(Math.floor(((new Date).getTime() - 24 * 60 * 60 * 1000) / 1000))
 }
 
+// process each block
 export async function handleBlock(block:Block, store:Store):Promise<void>{
   const timestampOf24HoursAgo = getTimestampOf24hAgo();
 
@@ -61,6 +62,7 @@ export async function handleBlock(block:Block, store:Store):Promise<void>{
   }
 }
 
+// process each instruction
 export async function handleIns(ins: Instruction, store: Store): Promise<void> {
   let insFee = BigInt(0);
   const txDate = new Date(ins.block.timestamp * 1000).toISOString().split('T')[0];
@@ -140,19 +142,16 @@ export async function handleIns(ins: Instruction, store: Store): Promise<void> {
       dailyPriorityFee.totalPriorityGasPrice = BigInt(0);
     }
 
-    // process priority fee
+    // process daily gas price
     dailyPriorityFee.transactionCount +=1;
-
     if(priorityGasPrice > dailyPriorityFee.maxPriorityGasPrice){
       dailyPriorityFee.maxPriorityGasPrice = priorityGasPrice;
     }
-
     if(priorityGasPrice < dailyPriorityFee.minPriorityGasPrice){
       dailyPriorityFee.minPriorityGasPrice = priorityGasPrice;
     }
 
     dailyPriorityFee.totalPriorityGasPrice += priorityGasPrice;
-
     dailyPriorityFee.averagePriorityGasPrice = dailyPriorityFee.totalPriorityGasPrice / BigInt(dailyPriorityFee.transactionCount);
     
     await store.upsert(dailyPriorityFee);
