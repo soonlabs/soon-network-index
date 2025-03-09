@@ -8,7 +8,7 @@ import {
   BooleanColumn,
   Column,
 } from "@subsquid/typeorm-store";
-import { ManyToOne, OneToMany } from "typeorm";
+import { Index, ManyToOne, OneToMany } from "typeorm";
 
 @Entity()
 export class SoonNetworkStatus {
@@ -121,6 +121,7 @@ export class TokenTransfer {
   id!: string;
 
   // tx
+  @Index()
   @ManyToOne(() => SoonNetworkTx, (ele) => ele.txHash)
   tx!: SoonNetworkTx;
 
@@ -158,7 +159,7 @@ export class DailyTransactionStat {
   date!: string;
 
   @IntColumn({ nullable: false })
-  transactionCount!: number; 
+  transactionCount!: number;
 }
 
 @Entity()
