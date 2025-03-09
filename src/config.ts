@@ -23,4 +23,4 @@ export const SyncConfigAllNetworks = {
   eclipse: {},
 };
 
-export const SyncConfig = SyncConfigAllNetworks.soon.testnet;
+export const SyncConfig = SyncConfigAllNetworks.soon.mainnet;
