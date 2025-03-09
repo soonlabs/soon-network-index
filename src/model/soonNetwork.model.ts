@@ -221,15 +221,15 @@ export class TransactionFeeStat {
   @BigIntColumn({ nullable: false })
   networkTransactionsFee!: bigint;
 
-  // total gas price
-  @BigIntColumn({ nullable: false })
-  totalGasPrice!: bigint;
+  // // total gas price
+  // @BigIntColumn({ nullable: false })
+  // totalGasPrice!: bigint;
 
-  // total tx count
-  @BigIntColumn({ nullable: false })
-  totalTxCount!: bigint;
+  // // total tx count
+  // @BigIntColumn({ nullable: false })
+  // totalTxCount!: bigint;
 
-  // average gas price
-  @BigIntColumn({ nullable: false })
-  averageGasPrice!: bigint;
+  // // average gas price
+  // @BigIntColumn({ nullable: false })
+  // averageGasPrice!: bigint;
 }

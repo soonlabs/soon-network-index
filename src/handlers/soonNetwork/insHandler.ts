@@ -116,16 +116,16 @@ export async function handleIns(ins: Instruction, store: Store): Promise<void> {
       transactionFeeStat = new TransactionFeeStat();
       transactionFeeStat.id = "1";
       transactionFeeStat.networkTransactionsFee = BigInt(0);
-      transactionFeeStat.totalGasPrice = BigInt(0);
-      transactionFeeStat.totalTxCount = BigInt(0);
-      transactionFeeStat.averageGasPrice = BigInt(0);
+      // transactionFeeStat.totalGasPrice = BigInt(0);
+      // transactionFeeStat.totalTxCount = BigInt(0);
+      // transactionFeeStat.averageGasPrice = BigInt(0);
     }
 
     transactionFeeStat.networkTransactionsFee += insFee;
-    transactionFeeStat.totalGasPrice += priorityGasPrice;
-    transactionFeeStat.totalTxCount += BigInt(1);
+    // transactionFeeStat.totalGasPrice += priorityGasPrice;
+    // transactionFeeStat.totalTxCount += BigInt(1);
 
-    transactionFeeStat.averageGasPrice = transactionFeeStat.totalGasPrice / transactionFeeStat.totalTxCount;
+    // transactionFeeStat.averageGasPrice = transactionFeeStat.totalGasPrice / transactionFeeStat.totalTxCount;
     await store.upsert(transactionFeeStat);
 
     /////////////////////////////////////////////////////////////////////////////////
