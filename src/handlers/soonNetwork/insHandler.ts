@@ -41,6 +41,47 @@ export async function handleBlock(block:Block, store:Store):Promise<void>{
     await store.save(data);
   }
 
+  // process daily data
+  const txDate = new Date(block.header.timestamp * 1000).toISOString().split('T')[0];
+
+  /////////////////////////////////////////////////////////////////////////////////
+  // get network status
+  let networkStatus = await store.get(SoonNetworkStatus, {
+    where: {
+      id: "1",
+    },
+  });
+
+  if(networkStatus){
+    // update daily transaction
+    let dailyTx = await store.get(DailyTransactionStat, { where: { date: txDate } });
+    if (!dailyTx) {
+      dailyTx = new DailyTransactionStat();
+      dailyTx.id = txDate;
+      dailyTx.date = txDate;
+      dailyTx.transactionCount = BigInt(0);
+    }
+
+    dailyTx.transactionCount = networkStatus.txCount;
+    await store.upsert(dailyTx);  
+
+    /////////////////////////////////////////////////////////////////////////////////
+    // update daily unique address
+    let dailyUniqueAddr = await store.get(DailyUniqueAddressStat, { where: { date: txDate } });
+    
+    if (!dailyUniqueAddr) {
+      // create today's entity
+      dailyUniqueAddr = new DailyUniqueAddressStat();
+      dailyUniqueAddr.id = txDate;
+      dailyUniqueAddr.date = txDate;
+      dailyUniqueAddr.uniqueAddressCount = BigInt(0);
+    }
+    
+    dailyUniqueAddr.uniqueAddressCount = networkStatus.addressCount;
+
+    await store.upsert(dailyUniqueAddr);
+  }
+
   ////////////////////////////////////////////////////////////////////////
   // remove transactions before 24 hours ago
   if(block.header.height % 500 !== 0){

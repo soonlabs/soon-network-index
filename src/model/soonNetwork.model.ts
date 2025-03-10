@@ -159,7 +159,7 @@ export class DailyTransactionStat {
   date!: string;
 
   @IntColumn({ nullable: false })
-  transactionCount!: number;
+  transactionCount!: bigint;
 }
 
 @Entity()
@@ -175,10 +175,7 @@ export class DailyUniqueAddressStat {
   date!: string;
 
   @IntColumn({ nullable: false })
-  uniqueAddressCount!: number;
-
-  @Column("text", { array: true })
-  addresses!: string[];
+  uniqueAddressCount!: bigint;
 }
 
 @Entity()
