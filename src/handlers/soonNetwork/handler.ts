@@ -2,6 +2,8 @@ import { Store } from "@subsquid/typeorm-store";
 import assert from "assert";
 import * as tokenProgram from "../../abi/token-program";
 import {
+  DailyTransactionStat,
+  DailyUniqueAddressStat,
   SoonNetworkProgram,
   SoonNetworkStatus,
   SoonNetworkTx,
@@ -12,15 +14,40 @@ import { Block, Instruction, Transaction } from "@subsquid/solana-objects";
 import { log } from "node:console";
 import { SyncConfig } from "../../config";
 import { Base58Bytes } from "@subsquid/borsh/lib/type-util";
+import { handleBlock, handleIns } from "./insHandler";
 
 export async function handleSoonNetwork(blocks: Block[], store: Store): Promise<void> {
   for (let block of blocks) {
     for (let tx of block.transactions) {
-      // filter out the instructions with errors
-      if (tx.err) {
-        continue;
+      try {
+        // filter out the instructions with errors
+        if (tx.err) {
+          continue;
+        }
+      
+        await handleTx(tx, store);
+      } catch (error) {
+        console.error(`Error processing tx, block ${tx?.block?.height ?? "unknown"}:`, error);
       }
-      await handleTx(tx, store);
+    }
+
+    for (let ins of block.instructions) {
+      try {
+        // filter out the instructions with errors
+        if (ins.getTransaction().err) {
+          continue;
+        }
+        await handleIns(ins, store);
+      } catch (error) {
+        console.error(`Error processing ins, block ${ins?.block?.height ?? "unknown"}:`, error);
+      }
+    }
+
+    // process each block
+    try {
+      await handleBlock(block, store);
+    } catch (error) {
+      console.error(`Error processing block ${block?.header?.height ?? "unknown"}:`, error);
     }
   }
 }
@@ -92,7 +119,9 @@ async function handleTx(tx: Transaction, store: Store): Promise<void> {
       new SoonNetworkStatus({
         id: "1",
         txCount: BigInt(1),
+        txCount24Hours: BigInt(0),
         addressCount: BigInt(await store.count(SoonNetworkUserAddress)),
+        addressCount24Hours: BigInt(0),
         programCount: BigInt(await store.count(SoonNetworkProgram)),
       })
     );
@@ -142,4 +171,48 @@ async function handleTx(tx: Transaction, store: Store): Promise<void> {
       }
     }
   }
+
+  const txDate = new Date(tx.block.timestamp * 1000).toISOString().split('T')[0];
+
+  /////////////////////////////////////////////////////////////////////////////////
+  // update daily transaction
+  let dailyTx = await store.get(DailyTransactionStat, { where: { date: txDate } });
+  if (!dailyTx) {
+    dailyTx = new DailyTransactionStat();
+    dailyTx.id = txDate;
+    dailyTx.date = txDate;
+    dailyTx.transactionCount = 0;
+  }
+  dailyTx.transactionCount += 1;
+  await store.upsert(dailyTx);
+
+  /////////////////////////////////////////////////////////////////////////////////
+  // update daily unique address
+  const sender = (tx as any).accountKeys[0];
+  let dailyUniqueAddr = await store.get(DailyUniqueAddressStat, { where: { date: txDate } });
+  
+  if (!dailyUniqueAddr) {
+    // clear previous addresses array
+    const yesterday = new Date(tx.block.timestamp * 1000 - 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
+    let yesterdayStats = await store.get(DailyUniqueAddressStat, { where: { date: yesterday } });
+    if(yesterdayStats && yesterdayStats.addresses?.length > 0){
+      yesterdayStats.addresses = []; 
+      await store.upsert(yesterdayStats);
+    }
+
+    // create today's entity
+    dailyUniqueAddr = new DailyUniqueAddressStat();
+    dailyUniqueAddr.id = txDate;
+    dailyUniqueAddr.date = txDate;
+    dailyUniqueAddr.uniqueAddressCount = 0;
+    dailyUniqueAddr.addresses = [];
+  }
+  
+  if (!dailyUniqueAddr.addresses.includes(sender)) {
+    dailyUniqueAddr.addresses.push(sender);
+    dailyUniqueAddr.uniqueAddressCount += 1;
+  }
+
+  await store.upsert(dailyUniqueAddr);
 }
