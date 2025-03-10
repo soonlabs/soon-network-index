@@ -120,8 +120,10 @@ async function handleTx(tx: Transaction, store: Store): Promise<void> {
         id: "1",
         txCount: BigInt(1),
         txCount24Hours: BigInt(0),
+        txCount30Days: BigInt(0),
         addressCount: BigInt(await store.count(SoonNetworkUserAddress)),
         addressCount24Hours: BigInt(0),
+        addressCount30Days: BigInt(0),
         programCount: BigInt(await store.count(SoonNetworkProgram)),
       })
     );
@@ -171,48 +173,4 @@ async function handleTx(tx: Transaction, store: Store): Promise<void> {
       }
     }
   }
-
-  const txDate = new Date(tx.block.timestamp * 1000).toISOString().split('T')[0];
-
-  /////////////////////////////////////////////////////////////////////////////////
-  // update daily transaction
-  let dailyTx = await store.get(DailyTransactionStat, { where: { date: txDate } });
-  if (!dailyTx) {
-    dailyTx = new DailyTransactionStat();
-    dailyTx.id = txDate;
-    dailyTx.date = txDate;
-    dailyTx.transactionCount = 0;
-  }
-  dailyTx.transactionCount += 1;
-  await store.upsert(dailyTx);
-
-  /////////////////////////////////////////////////////////////////////////////////
-  // update daily unique address
-  const sender = (tx as any).accountKeys[0];
-  let dailyUniqueAddr = await store.get(DailyUniqueAddressStat, { where: { date: txDate } });
-  
-  if (!dailyUniqueAddr) {
-    // clear previous addresses array
-    const yesterday = new Date(tx.block.timestamp * 1000 - 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-
-    let yesterdayStats = await store.get(DailyUniqueAddressStat, { where: { date: yesterday } });
-    if(yesterdayStats && yesterdayStats.addresses?.length > 0){
-      yesterdayStats.addresses = []; 
-      await store.upsert(yesterdayStats);
-    }
-
-    // create today's entity
-    dailyUniqueAddr = new DailyUniqueAddressStat();
-    dailyUniqueAddr.id = txDate;
-    dailyUniqueAddr.date = txDate;
-    dailyUniqueAddr.uniqueAddressCount = 0;
-    dailyUniqueAddr.addresses = [];
-  }
-  
-  if (!dailyUniqueAddr.addresses.includes(sender)) {
-    dailyUniqueAddr.addresses.push(sender);
-    dailyUniqueAddr.uniqueAddressCount += 1;
-  }
-
-  await store.upsert(dailyUniqueAddr);
 }
