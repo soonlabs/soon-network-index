@@ -120,8 +120,10 @@ async function handleTx(tx: Transaction, store: Store): Promise<void> {
         id: "1",
         txCount: BigInt(1),
         txCount24Hours: BigInt(0),
+        txCount30Days: BigInt(0),
         addressCount: BigInt(await store.count(SoonNetworkUserAddress)),
         addressCount24Hours: BigInt(0),
+        addressCount30Days: BigInt(0),
         programCount: BigInt(await store.count(SoonNetworkProgram)),
       })
     );

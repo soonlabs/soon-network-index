@@ -19,13 +19,23 @@ import { Base58Bytes } from "@subsquid/borsh/lib/type-util";
 import * as computeBudget from "../../abi/computeBudget";
 import { LessThan, MoreThan } from "typeorm";
 
-export function getTimestampOf24hAgo(){
-  return BigInt(Math.floor(((new Date).getTime() - 24 * 60 * 60 * 1000) / 1000))
+export function getTimestampOf24hAgo(): bigint {
+  return getTimestampOfDaysAgo(1);
+}
+
+export function getTimestampOf30DaysAgo(): bigint {
+  return getTimestampOfDaysAgo(30);
+}
+
+function getTimestampOfDaysAgo(days: number): bigint {
+  const secondsAgo = days * 24 * 60 * 60;
+  return BigInt(Math.floor(Date.now() / 1000) - secondsAgo);
 }
 
 // process each block
 export async function handleBlock(block:Block, store:Store):Promise<void>{
   const timestampOf24HoursAgo = getTimestampOf24hAgo();
+  const timestampOf30DaysAgo = getTimestampOf30DaysAgo();
 
   // update 24 hours tx and address
   let data = await store.get(SoonNetworkStatus, {
@@ -36,8 +46,12 @@ export async function handleBlock(block:Block, store:Store):Promise<void>{
 
   if(data){
     // update tx count & address count for 24 hours 
-    data.txCount24Hours = BigInt(await store.count(SoonNetworkTx, { where: { timestamp: MoreThan(timestampOf24HoursAgo)}}))
-    data.addressCount24Hours = BigInt(await store.count(SoonNetworkUserAddress, { where: { lastActiveTimestamp: MoreThan(timestampOf24HoursAgo)}})),
+    data.txCount24Hours = BigInt(await store.count(SoonNetworkTx, { where: { timestamp: MoreThan(timestampOf24HoursAgo)}}));
+    data.addressCount24Hours = BigInt(await store.count(SoonNetworkUserAddress, { where: { lastActiveTimestamp: MoreThan(timestampOf24HoursAgo)}}));
+
+    // update tx count & address count for 30 days
+    data.txCount30Days = BigInt(await store.count(SoonNetworkTx, { where: { timestamp: MoreThan(timestampOf30DaysAgo)}}));
+    data.addressCount30Days = BigInt(await store.count(SoonNetworkUserAddress, { where: { lastActiveTimestamp: MoreThan(timestampOf30DaysAgo)}}));
     await store.save(data);
   }
 
