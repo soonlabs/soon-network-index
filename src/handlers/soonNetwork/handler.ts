@@ -11,7 +11,7 @@ import {
   TokenTransfer,
 } from "../../model/soonNetwork.model";
 import { Block, Instruction, Transaction } from "@subsquid/solana-objects";
-import { count, log } from "node:console";
+import { log } from "node:console";
 import { SyncConfig } from "../../config";
 import { Base58Bytes } from "@subsquid/borsh/lib/type-util";
 import { handleBlock, handleIns } from "./insHandler";
