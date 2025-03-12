@@ -122,6 +122,7 @@ async function handleTx(tx: Transaction, store: Store): Promise<void> {
         txCount24Hours: BigInt(0),
         addressCount: BigInt(await store.count(SoonNetworkUserAddress)),
         addressCount24Hours: BigInt(0),
+        addressCount7Days:BigInt(0),
         addressCount30Days: BigInt(0),
         programCount: BigInt(await store.count(SoonNetworkProgram)),
       })

@@ -35,6 +35,10 @@ export class SoonNetworkStatus {
   @BigIntColumn({ nullable: false })
   addressCount24Hours!: bigint;
 
+  // address count for 7 days
+  @BigIntColumn({ nullable: false })
+  addressCount7Days!: bigint;
+
   // address count for 30 days
   @BigIntColumn({ nullable: false })
   addressCount30Days!: bigint;
