@@ -50,7 +50,6 @@ export async function handleBlock(block:Block, store:Store):Promise<void>{
     data.addressCount24Hours = BigInt(await store.count(SoonNetworkUserAddress, { where: { lastActiveTimestamp: MoreThan(timestampOf24HoursAgo)}}));
 
     // update tx count & address count for 30 days
-    data.txCount30Days = BigInt(await store.count(SoonNetworkTx, { where: { timestamp: MoreThan(timestampOf30DaysAgo)}}));
     data.addressCount30Days = BigInt(await store.count(SoonNetworkUserAddress, { where: { lastActiveTimestamp: MoreThan(timestampOf30DaysAgo)}}));
     await store.save(data);
   }

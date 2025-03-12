@@ -27,10 +27,6 @@ export class SoonNetworkStatus {
   @BigIntColumn({ nullable: false })
   txCount24Hours!: bigint;
 
-  // transaction count for 30 days
-  @BigIntColumn({ nullable: false })
-  txCount30Days!: bigint;
-
   // address count
   @BigIntColumn({ nullable: false })
   addressCount!: bigint;
