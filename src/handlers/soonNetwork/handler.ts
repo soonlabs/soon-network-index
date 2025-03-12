@@ -11,7 +11,7 @@ import {
   TokenTransfer,
 } from "../../model/soonNetwork.model";
 import { Block, Instruction, Transaction } from "@subsquid/solana-objects";
-import { log } from "node:console";
+import { count, log } from "node:console";
 import { SyncConfig } from "../../config";
 import { Base58Bytes } from "@subsquid/borsh/lib/type-util";
 import { handleBlock, handleIns } from "./insHandler";
@@ -53,22 +53,32 @@ export async function handleSoonNetwork(blocks: Block[], store: Store): Promise<
 }
 
 async function updateProgram(ins: Instruction, store: Store) {
+  if(ins.instructionAddress.length > 1){
+    // if it is an inner instruction, the length of the instruction.instructionAddress array larger than 1
+    return;
+  }
+
   let data = await store.get(SoonNetworkProgram, {
     where: {
       id: ins.programId,
     },
   });
+
   if (!data) {
-    await store.save(
-      new SoonNetworkProgram({
-        id: ins.programId,
-        lastActiveTimestamp: BigInt(ins.block.timestamp),
-      })
-    );
+    data = new SoonNetworkProgram();
+    data.id = ins.programId;
+    data.totalTxCount = 0;
+    data.lastActiveTimestamp = BigInt(0);
   }
-  for (let inner of ins.inner) {
-    await updateProgram(inner, store);
-  }
+
+  data.lastActiveTimestamp = BigInt(ins.block.timestamp);
+  data.totalTxCount += 1;
+  
+  await store.upsert(data);
+
+  // for (let inner of ins.inner) {
+  //   await updateProgram(inner, store);
+  // }
 }
 
 async function updateUserAddr(tx: Transaction & { accountKeys: Base58Bytes[] }, store: Store) {

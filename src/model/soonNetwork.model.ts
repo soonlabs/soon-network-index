@@ -114,6 +114,9 @@ export class SoonNetworkProgram {
   @PrimaryColumn()
   id!: string;
 
+  @IntColumn({ nullable: false })
+  totalTxCount!: number;
+
   // last active timestamp of the program
   @BigIntColumn({ nullable: false })
   lastActiveTimestamp!: bigint;
