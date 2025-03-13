@@ -24,7 +24,7 @@ export async function handleSoonNetwork(blocks: Block[], store: Store): Promise<
         if (tx.err) {
           continue;
         }
-      
+
         await handleTx(tx, store);
       } catch (error) {
         console.error(`Error processing tx, block ${tx?.block?.height ?? "unknown"}:`, error);
@@ -94,6 +94,9 @@ async function updateUserAddr(tx: Transaction & { accountKeys: Base58Bytes[] }, 
         lastActiveTimestamp: BigInt(tx.block.timestamp),
       })
     );
+  } else {
+    data.lastActiveTimestamp = BigInt(tx.block.timestamp);
+    await store.upsert(data);
   }
 }
 
