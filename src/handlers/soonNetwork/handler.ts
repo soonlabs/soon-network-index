@@ -53,25 +53,32 @@ export async function handleSoonNetwork(blocks: Block[], store: Store): Promise<
 }
 
 async function updateProgram(ins: Instruction, store: Store) {
+  if(ins.instructionAddress.length > 1){
+    // if it is an inner instruction, the length of the instruction.instructionAddress array larger than 1
+    return;
+  }
+
   let data = await store.get(SoonNetworkProgram, {
     where: {
       id: ins.programId,
     },
   });
+
   if (!data) {
-    await store.save(
-      new SoonNetworkProgram({
-        id: ins.programId,
-        lastActiveTimestamp: BigInt(ins.block.timestamp),
-      })
-    );
-  } else {
-    data.lastActiveTimestamp = BigInt(ins.block.timestamp);
-    await store.upsert(data);
+    data = new SoonNetworkProgram();
+    data.id = ins.programId;
+    data.totalTxCount = 0;
+    data.lastActiveTimestamp = BigInt(0);
   }
-  for (let inner of ins.inner) {
-    await updateProgram(inner, store);
-  }
+
+  data.lastActiveTimestamp = BigInt(ins.block.timestamp);
+  data.totalTxCount += 1;
+  
+  await store.upsert(data);
+
+  // for (let inner of ins.inner) {
+  //   await updateProgram(inner, store);
+  // }
 }
 
 async function updateUserAddr(tx: Transaction & { accountKeys: Base58Bytes[] }, store: Store) {
@@ -126,9 +133,9 @@ async function handleTx(tx: Transaction, store: Store): Promise<void> {
         id: "1",
         txCount: BigInt(1),
         txCount24Hours: BigInt(0),
-        txCount30Days: BigInt(0),
         addressCount: BigInt(await store.count(SoonNetworkUserAddress)),
         addressCount24Hours: BigInt(0),
+        addressCount7Days:BigInt(0),
         addressCount30Days: BigInt(0),
         programCount: BigInt(await store.count(SoonNetworkProgram)),
       })

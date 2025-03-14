@@ -27,10 +27,6 @@ export class SoonNetworkStatus {
   @BigIntColumn({ nullable: false })
   txCount24Hours!: bigint;
 
-  // transaction count for 30 days
-  @BigIntColumn({ nullable: false })
-  txCount30Days!: bigint;
-
   // address count
   @BigIntColumn({ nullable: false })
   addressCount!: bigint;
@@ -38,6 +34,10 @@ export class SoonNetworkStatus {
   // address count for 24 hours
   @BigIntColumn({ nullable: false })
   addressCount24Hours!: bigint;
+
+  // address count for 7 days
+  @BigIntColumn({ nullable: false })
+  addressCount7Days!: bigint;
 
   // address count for 30 days
   @BigIntColumn({ nullable: false })
@@ -113,6 +113,9 @@ export class SoonNetworkProgram {
   // program address
   @PrimaryColumn()
   id!: string;
+
+  @IntColumn({ nullable: false })
+  totalTxCount!: number;
 
   // last active timestamp of the program
   @BigIntColumn({ nullable: false })

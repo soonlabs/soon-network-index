@@ -106,11 +106,11 @@ const dataSource = new DataSourceBuilder()
   .addInstruction({
     // select instructions, that:
     where: {
-      programId: [SyncConfig.address.ComputeBudget.programId],
-      d1: [
-        computeBudget.instructions.setComputeUnitLimit.d1,
-        computeBudget.instructions.setComputeUnitPrice.d1,
-      ],
+      // programId: [SyncConfig.address.ComputeBudget.programId],
+      // d1: [
+      //   computeBudget.instructions.setComputeUnitLimit.d1,
+      //   computeBudget.instructions.setComputeUnitPrice.d1,
+      // ],
       isCommitted: true, // where successfully committed
     },
     // for each instruction selected above
